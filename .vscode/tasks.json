@@ -5,17 +5,23 @@
             "label": "C/C++: cl.exe compilar archivo activo",
             "command": "cl.exe",
             "args": [
-                "/Zi",
+                // Opciones del compilador
                 "/EHsc",
                 "/nologo",
+                "/I${workspaceFolder}\\host\\include",
+                // Salida
                 "/Fo${workspaceFolder}\\host\\out\\",
                 "/Fd${workspaceFolder}\\host\\out\\",
                 "/Fe${workspaceFolder}\\host\\out\\host.exe",
+                // Código a compilar
                 "${workspaceFolder}\\host\\**.cpp",
-                "FSUIPC_User.lib",
-                "User32.lib",
+                // Librerias
+                "/I${workspaceFolder}\\host\\lib",
+                "${workspaceFolder}/host/lib/FSUIPC_User.lib",
+                "User32.lib",   // Dependencia de FSUIPC
+                "Ws2_32.lib",
                 "/link",
-                "/NODEFAULTLIB:LIBC.LIB"
+                "/NODEFAULTLIB:LIBC.LIB",
             ],
             "options": {
                 "cwd": "${fileDirname}"
