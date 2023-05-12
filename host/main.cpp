@@ -1,39 +1,34 @@
 #include <iostream>
-#include <thread>
 #include <windows.h>
 #include <signal.h>
+#include <vector>
 #include "main.h"
 #include "sim.h"
 #include "server.h"
 
+Server server;
+Sim sim;
 
 int main() {
 	SetConsoleCtrlHandler(ctrlEvent, true);
-
-	std::queue<std::string> msgs;
-	std::thread t(main_server, &msgs);
-	
-	Sim sim;
-	sim.monitor(0x238, 1);
-	sim.monitor(0x239, 1);
-	sim.monitor(0x23A, 1);
-	sim.monitor(0x2B4, 4);
+	//sim.Monitor("M;23a:c;2b8:i;28c0:d;");
 	while (true) {
-		if (!sim.connected) {
-			sim.open();
-		}
-		if (sim.connected) {
-			sim.poll();
-			sim.printOffsets();
-		}
-		if (!msgs.empty()) {
-			std::cout << msgs.front();
-			std::cout << "mensaje de la queue";
-			msgs.pop();
-		}
-		Sleep(1000);
+		server.Loop();
+		process(server.GetPackets());
+		sim.Loop();
+		Sleep(10);
 	}
 	return 1;
+}
+
+void process(std::vector<Packet> packets) {
+	for (auto packet = packets.begin(); packet != packets.end(); packet++) {
+		switch (packet->type) {
+			case 0:
+				sim.Monitor(packet->data);
+				break;
+		}
+	}
 }
 
 BOOL WINAPI ctrlEvent(DWORD signal) {
