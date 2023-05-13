@@ -6,7 +6,8 @@
             "command": "cl.exe",
             "args": [
                 // Opciones del compilador
-                "/EHsc",
+				"/EHsc",
+				"/Zi",
                 "/nologo",
                 "/I${workspaceFolder}\\host\\include",
                 // Salida

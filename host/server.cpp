@@ -7,9 +7,12 @@
 #include <time.h>
 #include <WinSock2.h> 
 #include <ws2tcpip.h>
+#include "main.h"
+#include "sim.h"
 #include "server.h"
 
-Server::Server() {
+Server::Server(FSSP *fssp) {
+	this->fssp = fssp;
 	// Inicializar WinSock
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -28,17 +31,19 @@ void Server::Thread() {
 	sockaddr_in senderAddr;
 	int senderAddrSize = sizeof(senderAddr);
 	while (true) {
-		recvfrom(sock, recvBuf, BufLen, 0, (SOCKADDR*)&senderAddr, &senderAddrSize);
+		ZeroMemory(&recvBuf, BufLen);
+		int bytes = recvfrom(sock, recvBuf, BufLen, 0, (SOCKADDR*)&senderAddr, &senderAddrSize);
+		if (bytes <= 0) {continue;}
 		received_mutex.lock();
-		received.push(std::string(recvBuf));
+		received.push(std::string(recvBuf, bytes));
 		received_mutex.unlock();
 		AddClientIfNew(senderAddr);
-		ZeroMemory(&recvBuf, BufLen);
 	}
 }
 
 void Server::Loop() {
 	CheckClients();
+	ProcessPackets();
 }
 
 void Server::AddClientIfNew(sockaddr_in remote) {
@@ -57,6 +62,7 @@ void Server::AddClientIfNew(sockaddr_in remote) {
 		client.addr.sin_port = htons(CLIENT_PORT);
 		client.lastPing = time(NULL);
 		clients.push_back(client);
+		printf("New client connected %s\n", inet_ntoa(client.addr.sin_addr));
 	}
 	clients_mutex.unlock();
 }
@@ -64,34 +70,36 @@ void Server::AddClientIfNew(sockaddr_in remote) {
 void Server::CheckClients() {
 	clients_mutex.lock();
 	time_t t = time(NULL);
-	for (auto c = clients.begin(); c != clients.end(); ++c) {
-		struct {
-			int a = 50;
-			int b = 60;
-			int c = 70;
-		} msg;
-		sendto(sock, (char*)&msg, sizeof(msg), 0, (SOCKADDR*)&c->addr, sizeof(c->addr));
-		if (c->lastPing + TIMEOUT < t) {
-			clients.erase(c--);
+	for (auto client = clients.begin(); client != clients.end(); ++client) {
+		if (client->lastPing + TIMEOUT < t) {
+			printf("Client timed-out %s\n", inet_ntoa(client->addr.sin_addr));
+			clients.erase(client--);
 		}
 	}
 	clients_mutex.unlock();
 }
 
-std::vector<Packet> Server::GetPackets() {
+void Server::ProcessPackets() {
 	received_mutex.lock();
-	std::vector<Packet> packets;
 	while (!received.empty()) {
-		Packet packet;
-		packet.data = received.front();
-		packet.type = -1;
-		if (packet.data.compare("M;") >= 0) {packet.type = 0;}
-		if (packet.type > -1) {
-			packets.push_back(packet);
+		std::string packet = received.front();
+		if (packet.compare("M;") >= 0) {
+			this->fssp->sim->Monitor(packet);
+		} else if (packet.compare("C;") >= 0) {
+			this->fssp->sim->Control(packet);
+		} else {
+			this->fssp->sim->Input(packet);
 		}
 		received.pop();
 	}
 	received_mutex.unlock();
-	return packets;
+}
+
+void Server::Broadcast(char *ptr, int bytes) {
+	clients_mutex.lock();
+	for (auto c = clients.begin(); c != clients.end(); ++c) {
+		sendto(sock, ptr, bytes, 0, (SOCKADDR*)&c->addr, sizeof(c->addr));
+	}
+	clients_mutex.unlock();
 }
 

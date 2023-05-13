@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "C/C++: cl.exe Compilar y depurar el archivo activo",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\host\\out\\host.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+			"console": "integratedTerminal",
+            "environment": [],
+            "preLaunchTask": "C/C++: cl.exe compilar archivo activo",
+			"symbolOptions": {
+				"searchPaths": ["${workspaceFolder}\\host\\out\\"],
+				"searchMicrosoftSymbolServer": false
+			}
+        }
+    ],
+    "version": "2.0.0"
+}

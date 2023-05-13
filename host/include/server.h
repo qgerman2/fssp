@@ -16,13 +16,10 @@ struct Client {
 	time_t lastPing;
 };
 
-struct Packet {
-	char type;
-	std::string data;
-};
-
+class FSSP;
 class Server {
 	private:
+		FSSP *fssp;
 		std::vector<Client> clients;
 		std::thread thread;
 		std::queue<std::string> received;
@@ -36,9 +33,10 @@ class Server {
 		void Thread();
 		void AddClientIfNew(sockaddr_in address);
 		void CheckClients();
+		void ProcessPackets();
 	public:
-		Server();
+		Server(FSSP *fssp);
 		void Loop();
-		std::vector<Packet> GetPackets();
+		void Broadcast(char *ptr, int bytes);
 };
 #endif

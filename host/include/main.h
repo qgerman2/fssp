@@ -1,7 +1,16 @@
+#ifndef MAIN
+#define MAIN
 #include <windows.h>
-#include <vector>
-#include "server.h"
+class Sim;
+class Server;
+class FSSP {
+	public:
+		Sim *sim;
+		Server *server;
+		FSSP() {};
+};
 int main();
 void loop();
-void process(std::vector<Packet> packets);
+void process();
 BOOL WINAPI ctrlEvent(DWORD signal);
+#endif
