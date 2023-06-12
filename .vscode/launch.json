@@ -1,20 +1,54 @@
 {
     "configurations": [
         {
-            "name": "C/C++: cl.exe Compilar y depurar el archivo activo",
-            "type": "cppvsdbg",
+            "name": "Compilar y depurar 32-bit",
+            "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\host\\out\\host.exe",
+            "program": "${workspaceFolder}\\build\\fssp.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
-			"console": "integratedTerminal",
-            "environment": [],
-            "preLaunchTask": "C/C++: cl.exe compilar archivo activo",
-			"symbolOptions": {
-				"searchPaths": ["${workspaceFolder}\\host\\out\\"],
-				"searchMicrosoftSymbolServer": false
-			}
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\msys64\\mingw32\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Habilitar la impresión con sangría para gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Establecer tipo de desensamblado en Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Compilar 32-bit"
+        },
+		{
+            "name": "Compilar y depurar 64-bit",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\build\\fssp64.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Habilitar la impresión con sangría para gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Establecer tipo de desensamblado en Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Compilar 64-bit"
         }
     ],
     "version": "2.0.0"
