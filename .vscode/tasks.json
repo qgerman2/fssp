@@ -2,73 +2,34 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "Compilar 32-bit",
-            "command": "g++",
+            "label": "C/C++: cl.exe compilar archivo activo",
+            "command": "cl.exe",
             "args": [
-				"-static",
-				"-static-libgcc",
-				"-static-libstdc++",
-                "-fdiagnostics-color=always",
-                "-g",
+				"/std:c++17",
+				"/MDd",
+                "/Zi",
+                "/EHsc",
+                "/nologo",
+				"/I${workspaceFolder}\\libraries\\",
+				"/I${workspaceFolder}\\fssp\\include\\",
+                "/Fe${workspaceFolder}\\build\\fssp.exe",
+                "/Fd${workspaceFolder}\\build\\",
+				"/Fo${workspaceFolder}\\build\\",
                 "${workspaceFolder}\\fssp\\*.cpp",
-                "-o",
-                "${workspaceFolder}\\build\\fssp.exe",
-				"-I${workspaceFolder}\\fssp\\include",
-				"-I${workspaceFolder}\\libraries",
-				"-L${workspaceFolder}\\libraries\\FSUIPC",
-				"-L${workspaceFolder}\\libraries\\ftxui",
-				"-l:FSUIPC_User.a",
-				"-lftxui-component",
-				"-lftxui-dom",
-				"-lftxui-screen",
-				"-lws2_32"
+				"${workspaceFolder}\\libraries\\FSUIPC\\FSUIPC_User.lib",
+				"${workspaceFolder}\\libraries\\ftxui\\ftxui-component.lib",
+				"${workspaceFolder}\\libraries\\ftxui\\ftxui-dom.lib",
+				"${workspaceFolder}\\libraries\\ftxui\\ftxui-screen.lib",
+                "User32.lib",   // Dependencia de FSUIPC
+                "Ws2_32.lib",
+                "/link",
+                "/NODEFAULTLIB:LIBC.LIB",
             ],
             "options": {
-                "cwd": "${fileDirname}",
-				"env": {
-					"PATH": "C:\\windows\\system32;C:\\msys64\\mingw32\\bin"
-				},
+                "cwd": "${fileDirname}"
             },
             "problemMatcher": [
-                "$gcc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "detail": "Tarea generada por el depurador."
-        },
-		{
-            "type": "cppbuild",
-            "label": "Compilar 64-bit",
-            "command": "g++",
-            "args": [
-				"-static",
-				"-static-libgcc",
-				"-static-libstdc++",
-                "-fdiagnostics-color=always",
-                "-g",
-                "${workspaceFolder}\\fssp\\*.cpp",
-                "-o",
-                "${workspaceFolder}\\build\\fssp64.exe",
-				"-I${workspaceFolder}\\fssp\\include",
-				"-I${workspaceFolder}\\libraries",
-				"-L${workspaceFolder}\\libraries\\FSUIPC",
-				"-L${workspaceFolder}\\libraries\\ftxui",
-				"-l:FSUIPC_User64.a",
-				"-lftxui-component64",
-				"-lftxui-dom64",
-				"-lftxui-screen64",
-				"-lws2_32"
-            ],
-            "options": {
-                "cwd": "${fileDirname}",
-				"env": {
-					"PATH": "C:\\windows\\system32;C:\\msys64\\mingw64\\bin"
-				},
-            },
-            "problemMatcher": [
-                "$gcc"
+                "$msCompile"
             ],
             "group": {
                 "kind": "build",

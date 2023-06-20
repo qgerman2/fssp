@@ -51,8 +51,9 @@ Component Checkbox(ConstStringRef label,
                    bool* checked,
                    Ref<CheckboxOption> option = CheckboxOption::Simple());
 
+Component Input(StringRef content, Ref<InputOption> option = {});
 Component Input(StringRef content,
-                ConstStringRef placeholder,
+                StringRef placeholder,
                 Ref<InputOption> option = {});
 
 Component Menu(ConstStringListRef entries,
@@ -92,6 +93,7 @@ Component ResizableSplitLeft(Component main, Component back, int* main_size);
 Component ResizableSplitRight(Component main, Component back, int* main_size);
 Component ResizableSplitTop(Component main, Component back, int* main_size);
 Component ResizableSplitBottom(Component main, Component back, int* main_size);
+Component ResizableSplit(ResizableSplitOption options);
 
 Component Renderer(Component child, std::function<Element()>);
 Component Renderer(std::function<Element()>);

@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "ftxui/dom/canvas.hpp"
+#include "ftxui/dom/direction.hpp"
 #include "ftxui/dom/flexbox_config.hpp"
 #include "ftxui/dom/linear_gradient.hpp"
 #include "ftxui/dom/node.hpp"
@@ -29,8 +30,6 @@ enum BorderStyle {
   ROUNDED,
   EMPTY,
 };
-
-enum class GaugeDirection { Left, Up, Right, Down };
 
 // Pipe elements into decorator togethers.
 // For instance the next lines are equivalents:
@@ -66,7 +65,7 @@ Element gaugeLeft(float progress);
 Element gaugeRight(float progress);
 Element gaugeUp(float progress);
 Element gaugeDown(float progress);
-Element gaugeDirection(float progress, GaugeDirection);
+Element gaugeDirection(float progress, Direction direction);
 Element border(Element);
 Element borderLight(Element);
 Element borderDashed(Element);
@@ -110,6 +109,8 @@ Element bgcolor(const LinearGradient&, Element);
 Decorator focusPosition(int x, int y);
 Decorator focusPositionRelative(float x, float y);
 Element automerge(Element child);
+Decorator hyperlink(std::string link);
+Element hyperlink(std::string link, Element child);
 
 // --- Layout is
 // Horizontal, Vertical or stacked set of elements.
@@ -141,9 +142,9 @@ Element notflex(Element);  // Reset the flex attribute.
 Element filler();          // A blank expandable element.
 
 // -- Size override;
-enum Direction { WIDTH, HEIGHT };
+enum WidthOrHeight { WIDTH, HEIGHT };
 enum Constraint { LESS_THAN, EQUAL, GREATER_THAN };
-Decorator size(Direction, Constraint, int value);
+Decorator size(WidthOrHeight, Constraint, int value);
 
 // --- Frame ---
 // A frame is a scrollable area. The internal area is potentially larger than

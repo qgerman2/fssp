@@ -29,7 +29,7 @@ class Ref {
   Ref() {}
   Ref(const T& t) : owned_(t) {}
   Ref(T&& t) : owned_(std::forward<T>(t)) {}
-  Ref(T* t) : address_(t) {}
+  Ref(T* t) : owned_(), address_(t) {}
   T& operator*() { return address_ ? *address_ : owned_; }
   T& operator()() { return address_ ? *address_ : owned_; }
   T* operator->() { return address_ ? address_ : &owned_; }
@@ -48,6 +48,7 @@ class StringRef {
   StringRef(const wchar_t* ref) : StringRef(to_string(std::wstring(ref))) {}
   StringRef(const char* ref) : StringRef(std::string(ref)) {}
   std::string& operator*() { return address_ ? *address_ : owned_; }
+  std::string& operator()() { return address_ ? *address_ : owned_; }
   std::string* operator->() { return address_ ? address_ : &owned_; }
 
  private:

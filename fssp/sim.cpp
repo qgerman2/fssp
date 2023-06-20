@@ -7,7 +7,7 @@
 #include "sim.h"
 #include "server.h"
 
-char *FSIUPCErrors[] =
+const char *FSIUPCErrors[] =
 	{	"Okay",
 		"Attempt to Open when already Open",
 		"Cannot link to FSUIPC or WideClient",
