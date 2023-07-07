@@ -8,15 +8,18 @@
 #include <time.h>
 #include <WinSock2.h> 
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
 #include "main.h"
 #include "sim.h"
 #include "server.h"
+#include "dbg.h"
 
 Server::Server(inoFS *inofs) {
 	this->inofs = inofs;
 	// Inicializar WinSock
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
+	UpdateLocalIPs();
 	// Structs para dirección local
 	sockaddr_in localAddr;
 	localAddr.sin_family = AF_INET;
@@ -26,6 +29,26 @@ Server::Server(inoFS *inofs) {
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	bind(sock, (SOCKADDR*)&localAddr, sizeof(localAddr));
 	thread = std::thread(&Server::Thread, this);
+}
+
+// https://learn.microsoft.com/windows/win32/api/iphlpapi/nf-iphlpapi-getipaddrtable
+void Server::UpdateLocalIPs() {
+	localips.clear();
+	PMIB_IPADDRTABLE pIPAddrTable;
+	pIPAddrTable = (MIB_IPADDRTABLE *) HeapAlloc(GetProcessHeap(), 0, (sizeof(MIB_IPADDRTABLE)));
+    DWORD dwSize = 0;
+    DWORD dwRetVal = 0;
+	GetIpAddrTable(pIPAddrTable, &dwSize, 0);
+	pIPAddrTable = (MIB_IPADDRTABLE *) HeapAlloc(GetProcessHeap(), 0, (dwSize));
+	dwRetVal = GetIpAddrTable( pIPAddrTable, &dwSize, 0 );
+	dprintf("\tNum Entries: %ld\n", pIPAddrTable->dwNumEntries);
+	int i;
+	IN_ADDR IPAddr;
+	for (i=0; i < (int) pIPAddrTable->dwNumEntries; i++) {
+        IPAddr.S_un.S_addr = (u_long)pIPAddrTable->table[i].dwAddr;
+        localips.push_back(inet_ntoa(IPAddr));
+    }
+	HeapFree(GetProcessHeap(), 0, (pIPAddrTable));
 }
 
 void Server::Thread() {
@@ -63,7 +86,7 @@ void Server::AddClientIfNew(sockaddr_in remote) {
 		client.addr.sin_port = htons(CLIENT_PORT);
 		client.lastPing = time(NULL);
 		clients.push_back(client);
-		printf("New client connected %s\n", inet_ntoa(client.addr.sin_addr));
+		dprintf("New client connected %s\n", inet_ntoa(client.addr.sin_addr));
 	}
 	clients_mutex.unlock();
 }
@@ -71,10 +94,13 @@ void Server::AddClientIfNew(sockaddr_in remote) {
 void Server::CheckClients() {
 	clients_mutex.lock();
 	time_t t = time(NULL);
-	for (auto client = clients.begin(); client != clients.end(); ++client) {
+	auto client = clients.begin();
+	while (client != clients.end()) {
 		if (client->lastPing + TIMEOUT < t) {
-			printf("Client timed-out %s\n", inet_ntoa(client->addr.sin_addr));
-			clients.erase(client--);
+			dprintf("Client timed-out %s\n", inet_ntoa(client->addr.sin_addr));
+			client = clients.erase(client);
+		} else {
+			client++;
 		}
 	}
 	clients_mutex.unlock();
@@ -104,3 +130,10 @@ void Server::Broadcast(char *ptr, int bytes) {
 	clients_mutex.unlock();
 }
 
+std::vector<Client> Server::GetClients() {
+	return clients;
+}
+
+std::vector<std::string> Server::GetLocalIPs() {
+	return localips;
+}

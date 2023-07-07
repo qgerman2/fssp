@@ -1,42 +1,43 @@
 {
-    "tasks": [
-        {
-            "type": "cppbuild",
-            "label": "C/C++: cl.exe compilar archivo activo",
-            "command": "cl.exe",
-            "args": [
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "C/C++: cl.exe compilar archivo activo",
+			"command": "cl.exe",
+			"args": [
 				"/std:c++17",
 				"/MDd",
-                "/Zi",
-                "/EHsc",
-                "/nologo",
+				"/Zi",
+				"/EHsc",
+				"/nologo",
 				"/I${workspaceFolder}\\libraries\\",
 				"/I${workspaceFolder}\\inoFS\\include\\",
-                "/Fe${workspaceFolder}\\build\\inoFS.exe",
-                "/Fd${workspaceFolder}\\build\\",
+				"/Fe${workspaceFolder}\\build\\inoFS.exe",
+				"/Fd${workspaceFolder}\\build\\",
 				"/Fo${workspaceFolder}\\build\\",
-                "${workspaceFolder}\\inoFS\\*.cpp",
+				"${workspaceFolder}\\inoFS\\*.cpp",
 				"${workspaceFolder}\\libraries\\FSUIPC\\FSUIPC_User.lib",
 				"${workspaceFolder}\\libraries\\ftxui\\ftxui-component.lib",
 				"${workspaceFolder}\\libraries\\ftxui\\ftxui-dom.lib",
 				"${workspaceFolder}\\libraries\\ftxui\\ftxui-screen.lib",
-                "User32.lib",   // Dependencia de FSUIPC
-                "Ws2_32.lib",
-                "/link",
-                "/NODEFAULTLIB:LIBC.LIB",
-            ],
-            "options": {
-                "cwd": "${fileDirname}"
-            },
-            "problemMatcher": [
-                "$msCompile"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "detail": "Tarea generada por el depurador."
-        }
-    ],
-    "version": "2.0.0"
+				"User32.lib",   // Dependencia de FSUIPC
+				"Ws2_32.lib",
+				"IPHLPAPI.lib",
+				"/link",
+				"/NODEFAULTLIB:LIBC.LIB",
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$msCompile"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "Tarea generada por el depurador."
+		}
+	],
+	"version": "2.0.0"
 }

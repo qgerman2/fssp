@@ -6,6 +6,7 @@
 #include "main.h"
 #include "sim.h"
 #include "server.h"
+#include "dbg.h"
 
 const char *FSIUPCErrors[] =
 	{	"Okay",
@@ -47,7 +48,7 @@ bool Sim::Open() {
 	if (connected) {Close();}
 	if (FSUIPC_Open(SIM_ANY, &FSUIPCResult)) {
 		connected = true;
-		printf("Connected to flight sim!\n");
+		dprintf("Connected to flight sim!\n");
 		return true;
 	}
 	return false;
@@ -55,7 +56,7 @@ bool Sim::Open() {
 
 void Sim::Close() {
 	connected = false;
-	printf("Disconnected from flight sim\n%s\n", FSIUPCErrors[FSUIPCResult]);
+	dprintf("Disconnected from flight sim\n%s\n", FSIUPCErrors[FSUIPCResult]);
 	FSUIPC_Close();
 }
 
@@ -84,7 +85,7 @@ bool Sim::Poll() {
 
 void Sim::PrintValues() {
     for (auto offset = monitor.begin(); offset != monitor.end(); offset++) {
-		printf("location: %x, type: %d, value: %f\n", offset->location, offset->type, offset->value);
+		dprintf("location: %x, type: %d, value: %f\n", offset->location, offset->type, offset->value);
 	}
 }
 
@@ -127,11 +128,11 @@ bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
 					offset.value = 0;
 					dest->push_back(offset);
 				} else {
-					printf("ERROR: Unrecognized data type '%s'\n", type_str.c_str());
+					dprintf("ERROR: Unrecognized data type '%s'\n", type_str.c_str());
 					return false;
 				}
 			} catch (...) {
-				printf("ERROR: Failed to parse offset string\n");
+				dprintf("ERROR: Failed to parse offset string\n");
 				return false;
 			}
 		}
@@ -144,7 +145,7 @@ void Sim::Monitor(std::string str) {
 	monitor.clear();
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str, &offsets)) {
-		printf("Set up monitor with %d variables\n", offsets.size());
+		dprintf("Set up monitor with %d variables\n", offsets.size());
 		monitor = offsets;
 	}
 }
@@ -153,7 +154,7 @@ void Sim::Control(std::string str) {
 	control.clear();
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str, &offsets)) {
-		printf("Set up control with %d variables\n", offsets.size());
+		dprintf("Set up control with %d variables\n", offsets.size());
 		control = offsets;
 	}
 }
@@ -162,7 +163,7 @@ void Sim::Input(std::string str) {
 	if (control.size() == 0) {return;}
 	const int len = control.size() * sizeof(double);
 	if (str.size() != len) {
-		printf("Input string not right length (got %d bytes, should be %d bytes)\n",
+		dprintf("Input string not right length (got %d bytes, should be %d bytes)\n",
 			str.size(), len);
 		return;
 	}

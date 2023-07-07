@@ -5,11 +5,9 @@
 #include "sim.h"
 #include "server.h"
 #include "ui.h"
-#include "dbg.h"
 
 int main() {
 	inoFS inofs;
-	dprintf("test %d", 5);
 	inofs.server = new Server(&inofs);
 	inofs.sim = new Sim(&inofs);
 	inofs.ui = new UI(&inofs);
@@ -17,7 +15,7 @@ int main() {
 		inofs.server->Loop();
 		inofs.sim->Loop();
 		inofs.ui->Loop();
-		Sleep(100);
+		Sleep(1000/30);
 	}
 	return 1;
 }

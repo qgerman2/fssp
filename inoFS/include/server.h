@@ -20,6 +20,7 @@ class inoFS;
 class Server {
 	private:
 		inoFS *inofs;
+		std::vector<std::string> localips;
 		std::vector<Client> clients;
 		std::thread thread;
 		std::queue<std::string> received;
@@ -30,6 +31,9 @@ class Server {
 		char recvBuf[1024];
 		int BufLen = 1024;
 
+		char hostname[256];
+
+		void UpdateLocalIPs();
 		void Thread();
 		void AddClientIfNew(sockaddr_in address);
 		void CheckClients();
@@ -38,5 +42,7 @@ class Server {
 		Server(inoFS *inofs);
 		void Loop();
 		void Broadcast(char *ptr, int bytes);
+		std::vector<Client> GetClients();
+		std::vector<std::string> GetLocalIPs();
 };
 #endif
