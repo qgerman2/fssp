@@ -8,15 +8,15 @@
 #include "dbg.h"
 
 int main() {
-	FSSP fssp;
+	inoFS inofs;
 	dprintf("test %d", 5);
-	fssp.server = new Server(&fssp);
-	fssp.sim = new Sim(&fssp);
-	fssp.ui = new UI(&fssp);
+	inofs.server = new Server(&inofs);
+	inofs.sim = new Sim(&inofs);
+	inofs.ui = new UI(&inofs);
 	while (true) {
-		fssp.server->Loop();
-		fssp.sim->Loop();
-		fssp.ui->Loop();
+		inofs.server->Loop();
+		inofs.sim->Loop();
+		inofs.ui->Loop();
 		Sleep(100);
 	}
 	return 1;

@@ -11,10 +11,10 @@ struct Offset {
 	double value;
 };
 
-class FSSP;
+class inoFS;
 class Sim {
 	private:
-		FSSP *fssp;
+		inoFS *inofs;
 		DWORD FSUIPCResult;
 		bool connected;
 		std::vector<Offset> monitor;
@@ -26,7 +26,7 @@ class Sim {
 		void SendValues();
 		bool ParseOffsets(std::string str, std::vector<Offset> *dest);
 	public:
-		Sim(FSSP *fssp);
+		Sim(inoFS *inofs);
 		void Loop();
 		void Monitor(std::string str);
 		void Control(std::string str);

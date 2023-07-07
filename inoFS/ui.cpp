@@ -19,8 +19,8 @@ using namespace ftxui;
 
 
 
-UI::UI(FSSP *fssp) {
-	this->fssp = fssp;
+UI::UI(inoFS *inofs) {
+	this->inofs = inofs;
 	static auto screen = ScreenInteractive::TerminalOutput();
 
 	static std::vector<std::string> tab_names = {

@@ -4,12 +4,12 @@
 class Sim;
 class Server;
 class UI;
-class FSSP {
+class inoFS {
 	public:
 		Sim *sim;
 		Server *server;
 		UI *ui;
-		FSSP() {};
+		inoFS() {};
 };
 int main();
 void loop();

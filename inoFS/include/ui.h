@@ -8,13 +8,13 @@ const std::string logo2 = "  / __// __// __// _ \\";
 const std::string logo3 = " / _/ _\\ \\ _\\ \\ / ___/";
 const std::string logo4 = "/_/  /___//___//_/    ";
                             
-class FSSP;
+class inoFS;
 class UI {
 	private:
-		FSSP *fssp;
+		inoFS *inofs;
 		ftxui::Loop *loop;
 	public:
-		UI(FSSP *fssp);
+		UI(inoFS *inofs);
 		void Loop();
 };
 #endif

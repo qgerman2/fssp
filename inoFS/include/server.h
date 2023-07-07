@@ -16,10 +16,10 @@ struct Client {
 	time_t lastPing;
 };
 
-class FSSP;
+class inoFS;
 class Server {
 	private:
-		FSSP *fssp;
+		inoFS *inofs;
 		std::vector<Client> clients;
 		std::thread thread;
 		std::queue<std::string> received;
@@ -35,7 +35,7 @@ class Server {
 		void CheckClients();
 		void ProcessPackets();
 	public:
-		Server(FSSP *fssp);
+		Server(inoFS *inofs);
 		void Loop();
 		void Broadcast(char *ptr, int bytes);
 };

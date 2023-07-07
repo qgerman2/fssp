@@ -26,8 +26,8 @@ const char *FSIUPCErrors[] =
 		"Read or Write request cannot be added, memory for Process is full",
 	};
 
-Sim::Sim(FSSP *fssp) {
-	this->fssp = fssp;
+Sim::Sim(inoFS *inofs) {
+	this->inofs = inofs;
 	connected = false;
 }
 
@@ -93,7 +93,7 @@ void Sim::SendValues() {
 	for (auto offset = monitor.begin(); offset != monitor.end(); offset++) {
 		values.push_back(offset->value);
 	}
-	this->fssp->server->Broadcast((char*)values.data(), values.size() * sizeof(double));
+	this->inofs->server->Broadcast((char*)values.data(), values.size() * sizeof(double));
 }
 
 bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {

@@ -12,8 +12,8 @@
 #include "sim.h"
 #include "server.h"
 
-Server::Server(FSSP *fssp) {
-	this->fssp = fssp;
+Server::Server(inoFS *inofs) {
+	this->inofs = inofs;
 	// Inicializar WinSock
 	WSADATA wsaData;
 	WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -85,11 +85,11 @@ void Server::ProcessPackets() {
 	while (!received.empty()) {
 		std::string packet = received.front();
 		if (packet.compare("M;") >= 0) {
-			this->fssp->sim->Monitor(packet);
+			this->inofs->sim->Monitor(packet);
 		} else if (packet.compare("C;") >= 0) {
-			this->fssp->sim->Control(packet);
+			this->inofs->sim->Control(packet);
 		} else {
-			this->fssp->sim->Input(packet);
+			this->inofs->sim->Input(packet);
 		}
 		received.pop();
 	}
