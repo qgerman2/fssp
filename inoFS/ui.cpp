@@ -41,8 +41,6 @@ UI::UI(inoFS *inofs) {
 			})
 		});
 	});
-	
-	
 	this->loop = new ftxui::Loop(&screen, render);
 }
 

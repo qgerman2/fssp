@@ -6,14 +6,18 @@
 #include <queue>
 #include <string>
 #include <time.h>
+#include "sim.h"
 
 #define TIMEOUT 10
 #define SERVER_PORT 27015
 #define CLIENT_PORT 27016
 
 struct Client {
+	int id;
 	struct sockaddr_in addr;
 	time_t lastPing;
+	std::vector<Offset> monitor;
+	std::vector<Offset> control;
 };
 
 class inoFS;
@@ -23,8 +27,8 @@ class Server {
 		std::vector<std::string> localips;
 		std::vector<Client> clients;
 		std::thread thread;
-		std::queue<std::string> received;
-		std::mutex clients_mutex;		
+		std::queue<std::pair<std::string, int>> received;
+		std::mutex clients_mutex;	
 		std::mutex received_mutex;
 
 		SOCKET sock;
@@ -35,9 +39,10 @@ class Server {
 
 		void UpdateLocalIPs();
 		void Thread();
-		void AddClientIfNew(sockaddr_in address);
+		int AddClientIfNew(sockaddr_in address);
 		void CheckClients();
 		void ProcessPackets();
+		bool GetClient(int id, Client**);
 	public:
 		Server(inoFS *inofs);
 		void Loop();

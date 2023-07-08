@@ -58,10 +58,13 @@ void Server::Thread() {
 		ZeroMemory(&recvBuf, BufLen);
 		int bytes = recvfrom(sock, recvBuf, BufLen, 0, (SOCKADDR*)&senderAddr, &senderAddrSize);
 		if (bytes <= 0) {continue;}
+		int id = AddClientIfNew(senderAddr);
 		received_mutex.lock();
-		received.push(std::string(recvBuf, bytes));
+		std::pair<std::string, int> msg;
+		msg.first = std::string(recvBuf, bytes);
+		msg.second = id;
+		received.push(msg);
 		received_mutex.unlock();
-		AddClientIfNew(senderAddr);
 	}
 }
 
@@ -70,25 +73,32 @@ void Server::Loop() {
 	ProcessPackets();
 }
 
-void Server::AddClientIfNew(sockaddr_in remote) {
+int Server::AddClientIfNew(sockaddr_in remote) {
 	clients_mutex.lock();
+	int id = 0;
+	if (!clients.empty()) {
+		id = clients.back().id + 1;
+	}
 	bool newClient = true;
 	for (auto c = clients.begin(); c != clients.end(); ++c) {
 		if (c->addr.sin_addr.S_un.S_addr == remote.sin_addr.S_un.S_addr) {
 			c->lastPing = time(NULL);
 			newClient = false;
+			id = c->id;
 			break;
 		}
 	}
 	if (newClient) {
 		Client client;
+		client.id = id;
 		client.addr = remote;
 		client.addr.sin_port = htons(CLIENT_PORT);
 		client.lastPing = time(NULL);
 		clients.push_back(client);
-		dprintf("New client connected %s\n", inet_ntoa(client.addr.sin_addr));
+		dprintf("New client connected %s, id %d\n", inet_ntoa(client.addr.sin_addr), id);
 	}
 	clients_mutex.unlock();
+	return id;
 }
 
 void Server::CheckClients() {
@@ -108,18 +118,33 @@ void Server::CheckClients() {
 
 void Server::ProcessPackets() {
 	received_mutex.lock();
+	clients_mutex.lock();
 	while (!received.empty()) {
-		std::string packet = received.front();
-		if (packet.compare("M;") >= 0) {
-			this->inofs->sim->Monitor(packet);
-		} else if (packet.compare("C;") >= 0) {
-			this->inofs->sim->Control(packet);
-		} else {
-			this->inofs->sim->Input(packet);
+		std::string packet = received.front().first;
+		Client* client;
+		if (GetClient(received.front().second, &client)) {
+			if (packet.compare("M;") >= 0) {
+				this->inofs->sim->Monitor(packet, &client->monitor);
+			} else if (packet.compare("C;") >= 0) {
+				this->inofs->sim->Control(packet, &client->control);
+			} else {
+				this->inofs->sim->Input(packet, client->control);
+			}
 		}
 		received.pop();
 	}
 	received_mutex.unlock();
+	clients_mutex.unlock();
+}
+
+bool Server::GetClient(int id, Client **client) {
+	for (auto c = clients.begin(); c != clients.end(); ++c) {
+		if (id == c->id) {
+			*client = &(*c);
+			return true;
+		}
+	}
+	return false;
 }
 
 void Server::Broadcast(char *ptr, int bytes) {

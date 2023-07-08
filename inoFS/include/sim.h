@@ -17,8 +17,6 @@ class Sim {
 		inoFS *inofs;
 		DWORD FSUIPCResult;
 		bool connected;
-		std::vector<Offset> monitor;
-		std::vector<Offset> control;
 		bool Open();
 		void Close();
 		bool Poll();
@@ -28,8 +26,8 @@ class Sim {
 	public:
 		Sim(inoFS *inofs);
 		void Loop();
-		void Monitor(std::string str);
-		void Control(std::string str);
-		void Input(std::string str);
+		bool Monitor(std::string str, std::vector<Offset> *monitor);
+		bool Control(std::string str, std::vector<Offset> *control);
+		void Input(std::string str, std::vector<Offset> control);
 };
 #endif

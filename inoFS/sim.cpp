@@ -61,40 +61,49 @@ void Sim::Close() {
 }
 
 bool Sim::Poll() {
-	if (monitor.size() == 0) {return false;}
-    for (auto offset = monitor.begin(); offset != monitor.end(); offset++) {
-		char data[8];
-		FSUIPC_Read(offset->location, offset->size, &data, &FSUIPCResult);
-		if (!FSUIPC_Process(&FSUIPCResult)) {
-			Close();
-			return false;
+	auto clients = inofs->server->GetClients();
+	for (auto c = clients.begin(); c != clients.end(); ++c) {
+		if (c->monitor.size() == 0) {return false;}
+		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
+			char data[8];
+			FSUIPC_Read(offset->location, offset->size, &data, &FSUIPCResult);
+			if (!FSUIPC_Process(&FSUIPCResult)) {
+				Close();
+				return false;
+			}
+			if (offset->type == 0) {offset->value = *(u_char*)&data;}
+			else if (offset->type == 1) {offset->value = *(u_short*)&data;}
+			else if (offset->type == 2) {offset->value = *(u_int*)&data;}
+			else if (offset->type == 3) {offset->value = *(u_long*)&data;}
+			else if (offset->type == 4) {offset->value = *(char*)&data;}
+			else if (offset->type == 5) {offset->value = *(short*)&data;}
+			else if (offset->type == 6) {offset->value = *(int*)&data;}
+			else if (offset->type == 7) {offset->value = *(long*)&data;}
+			else if (offset->type == 8) {offset->value = *(float*)&data;}
+			else if (offset->type == 9) {offset->value = *(double*)&data;}
 		}
-		if (offset->type == 0) {offset->value = *(u_char*)&data;}
-		else if (offset->type == 1) {offset->value = *(u_short*)&data;}
-		else if (offset->type == 2) {offset->value = *(u_int*)&data;}
-		else if (offset->type == 3) {offset->value = *(u_long*)&data;}
-		else if (offset->type == 4) {offset->value = *(char*)&data;}
-		else if (offset->type == 5) {offset->value = *(short*)&data;}
-		else if (offset->type == 6) {offset->value = *(int*)&data;}
-		else if (offset->type == 7) {offset->value = *(long*)&data;}
-		else if (offset->type == 8) {offset->value = *(float*)&data;}
-		else if (offset->type == 9) {offset->value = *(double*)&data;}
 	}
 	return true;
 }
 
 void Sim::PrintValues() {
-    for (auto offset = monitor.begin(); offset != monitor.end(); offset++) {
-		dprintf("location: %x, type: %d, value: %f\n", offset->location, offset->type, offset->value);
+	auto clients = inofs->server->GetClients();
+	for (auto c = clients.begin(); c != clients.end(); ++c) {
+		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
+			dprintf("location: %x, type: %d, value: %f\n", offset->location, offset->type, offset->value);
+		}
 	}
 }
 
 void Sim::SendValues() {
-	std::vector<double> values;
-	for (auto offset = monitor.begin(); offset != monitor.end(); offset++) {
-		values.push_back(offset->value);
+	auto clients = inofs->server->GetClients();
+	for (auto c = clients.begin(); c != clients.end(); ++c) {
+		std::vector<double> values;
+		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
+			values.push_back(offset->value);
+		}
+		this->inofs->server->Broadcast((char*)values.data(), values.size() * sizeof(double));
 	}
-	this->inofs->server->Broadcast((char*)values.data(), values.size() * sizeof(double));
 }
 
 bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
@@ -141,25 +150,23 @@ bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
 	return true;
 }
 
-void Sim::Monitor(std::string str) {
-	monitor.clear();
-	std::vector<Offset> offsets;
-	if (ParseOffsets(str, &offsets)) {
-		dprintf("Set up monitor with %d variables\n", offsets.size());
-		monitor = offsets;
+bool Sim::Monitor(std::string str, std::vector<Offset> *monitor) {
+	if (ParseOffsets(str, monitor)) {
+		dprintf("Set up monitor with %d variables\n", monitor->size());
+		return true;
 	}
+	return false;
 }
 
-void Sim::Control(std::string str) {
-	control.clear();
-	std::vector<Offset> offsets;
-	if (ParseOffsets(str, &offsets)) {
-		dprintf("Set up control with %d variables\n", offsets.size());
-		control = offsets;
+bool Sim::Control(std::string str, std::vector<Offset> *control) {
+	if (ParseOffsets(str, control)) {
+		dprintf("Set up control with %d variables\n", control->size());
+		return true;
 	}
+	return false;
 }
 
-void Sim::Input(std::string str) {
+void Sim::Input(std::string str, std::vector<Offset> control) {
 	if (control.size() == 0) {return;}
 	const int len = control.size() * sizeof(double);
 	if (str.size() != len) {
