@@ -13,7 +13,7 @@ static Element logo = vbox({
 	text(" / / _ \\/ _ \\/ _/_\\ \\"), 
 	text("/_/_//_/\\___/_/ /___/")
 });
-                            
+
 class inoFS;
 class UI {
 	private:

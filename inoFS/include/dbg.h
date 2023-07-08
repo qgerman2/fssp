@@ -9,19 +9,19 @@
 
 inline void ShowDebugBase(const TCHAR *format, ...)
 {
-    va_list args;
-    SYSTEMTIME time;
-    TCHAR tempBuf[1920];
-    TCHAR msgBuf[2048];
+	va_list args;
+	SYSTEMTIME time;
+	TCHAR tempBuf[1920];
+	TCHAR msgBuf[2048];
 
-    GetLocalTime(&time);
+	GetLocalTime(&time);
 
-    va_start(args, format);
-    _vstprintf_s(tempBuf, format, args);
-    _stprintf_s(msgBuf, TEXT("%s\n"), tempBuf);
+	va_start(args, format);
+	_vstprintf_s(tempBuf, format, args);
+	_stprintf_s(msgBuf, TEXT("%s\n"), tempBuf);
 
-    OutputDebugString(msgBuf);
-    va_end(args);
+	OutputDebugString(msgBuf);
+	va_end(args);
 }
 
 #endif

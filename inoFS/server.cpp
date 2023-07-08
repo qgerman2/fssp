@@ -36,8 +36,8 @@ void Server::UpdateLocalIPs() {
 	localips.clear();
 	PMIB_IPADDRTABLE pIPAddrTable;
 	pIPAddrTable = (MIB_IPADDRTABLE *) HeapAlloc(GetProcessHeap(), 0, (sizeof(MIB_IPADDRTABLE)));
-    DWORD dwSize = 0;
-    DWORD dwRetVal = 0;
+	DWORD dwSize = 0;
+	DWORD dwRetVal = 0;
 	GetIpAddrTable(pIPAddrTable, &dwSize, 0);
 	pIPAddrTable = (MIB_IPADDRTABLE *) HeapAlloc(GetProcessHeap(), 0, (dwSize));
 	dwRetVal = GetIpAddrTable( pIPAddrTable, &dwSize, 0 );
@@ -45,9 +45,9 @@ void Server::UpdateLocalIPs() {
 	int i;
 	IN_ADDR IPAddr;
 	for (i=0; i < (int) pIPAddrTable->dwNumEntries; i++) {
-        IPAddr.S_un.S_addr = (u_long)pIPAddrTable->table[i].dwAddr;
-        localips.push_back(inet_ntoa(IPAddr));
-    }
+		IPAddr.S_un.S_addr = (u_long)pIPAddrTable->table[i].dwAddr;
+		localips.push_back(inet_ntoa(IPAddr));
+	}
 	HeapFree(GetProcessHeap(), 0, (pIPAddrTable));
 }
 
