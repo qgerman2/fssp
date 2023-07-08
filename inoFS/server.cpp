@@ -106,7 +106,7 @@ void Server::CheckClients() {
 	auto client = clients.begin();
 	while (client != clients.end()) {
 		if (client->lastPing + TIMEOUT < t) {
-			dprintf("Client timed-out %s, id %d", inet_ntoa(client->addr.sin_addr), client->id);
+			dprintf("Client %d timed-out", client->id);
 			client = clients.erase(client);
 		} else {
 			client++;
@@ -120,16 +120,16 @@ void Server::ProcessPackets() {
 	clients_mutex.lock();
 	while (!received.empty()) {
 		std::string packet = received.front().first;
-		Client* client;
+		Client *client;
 		if (GetClient(received.front().second, &client)) {
 			if (packet.compare(0, 2, "M;") == 0) {
-				this->inofs->sim->Monitor(packet, &client->monitor);
+				this->inofs->sim->Monitor(packet, client);
 			} else if (packet.compare(0, 2, "C;") == 0) {
-				this->inofs->sim->Control(packet, &client->control);
-			} else if (packet.compare(0, 2, "R;") == 0) {
-				this->inofs->sim->Read(packet, &(*client));
+				this->inofs->sim->Control(packet, client);
+			} else if (packet.compare(0, 2, "R:") == 0) {
+				this->inofs->sim->Read(packet, client);
 			} else if (packet.compare(0, 2, "W;") == 0) {
-				this->inofs->sim->Write(packet, &(*client));
+				this->inofs->sim->Write(packet, client);
 			} else {
 				this->inofs->sim->Input(packet, client->control);
 			}
@@ -153,14 +153,12 @@ bool Server::GetClient(int id, Client **client) {
 }
 
 void Server::Broadcast(int id, char *ptr, int bytes) {
-	clients_mutex.lock();
 	for (auto c = clients.begin(); c != clients.end(); ++c) {
 		if (id == c->id) {
 			sendto(sock, ptr, bytes, 0, (SOCKADDR*)&c->addr, sizeof(c->addr));
 			break;
 		}
 	}
-	clients_mutex.unlock();
 }
 
 std::vector<Client> Server::GetClients() {

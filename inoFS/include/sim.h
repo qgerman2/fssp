@@ -21,13 +21,13 @@ class Sim {
 		void Close();
 		bool Poll(std::vector<Offset> *offsets);
 		void PrintValues();
-		void SendValues(Client *client, std::vector<Offset> *offsets);
+		void SendValues(char header, Client *client, std::vector<Offset> *offsets);
 		bool ParseOffsets(std::string str, std::vector<Offset> *dest);
 	public:
 		Sim(inoFS *inofs);
 		void Loop();
-		bool Monitor(std::string str, std::vector<Offset> *monitor);
-		bool Control(std::string str, std::vector<Offset> *control);
+		bool Monitor(std::string str, Client *client);
+		bool Control(std::string str, Client *client);
 		bool Input(std::string str, std::vector<Offset> control);
 		bool Read(std::string str, Client *client);
 		bool Write(std::string str, Client *client);

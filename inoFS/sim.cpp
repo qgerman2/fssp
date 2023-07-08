@@ -41,7 +41,7 @@ void Sim::Loop() {
 		for (auto c = clients.begin(); c != clients.end(); ++c) {
 			if (Poll(&c->monitor)) {
 				//PrintValues();
-				SendValues(&(*c), &c->monitor);
+				SendValues(0, &(*c), &c->monitor);
 			}
 		}
 	}
@@ -95,8 +95,9 @@ void Sim::PrintValues() {
 	}
 }
 
-void Sim::SendValues(Client *client, std::vector<Offset> *offsets) {
+void Sim::SendValues(char header, Client *client, std::vector<Offset> *offsets) {
 	std::vector<double> values;
+	values.push_back(header);
 	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
 		values.push_back(offset->value);
 	}
@@ -147,17 +148,19 @@ bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
 	return true;
 }
 
-bool Sim::Monitor(std::string str, std::vector<Offset> *monitor) {
+bool Sim::Monitor(std::string str, Client *client) {
+	std::vector<Offset> *monitor = &client->monitor;
 	if (ParseOffsets(str, monitor)) {
-		dprintf("Set up monitor with %d variables\n", monitor->size());
+		dprintf("Client %d set up %d monitor variables\n", client->id, monitor->size());
 		return true;
 	}
 	return false;
 }
 
-bool Sim::Control(std::string str, std::vector<Offset> *control) {
+bool Sim::Control(std::string str, Client *client) {
+	std::vector<Offset> *control = &client->control;
 	if (ParseOffsets(str, control)) {
-		dprintf("Set up control with %d variables\n", control->size());
+		dprintf("Client %d set up %d control variables\n", client->id, control->size());
 		return true;
 	}
 	return false;
@@ -196,10 +199,16 @@ bool Sim::Input(std::string str, std::vector<Offset> control) {
 }
 
 bool Sim::Read(std::string str, Client *client) {
+	char header = str.at(2);
+	if (header > 48) {
+		header -= 48;
+	}
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str, &offsets)) {
+		dprintf("Client %d requested %d variables with header %d",
+			client->id, offsets.size(), header);
 		if (Poll(&offsets)) {
-			SendValues(client, &offsets);
+			SendValues(header, client, &offsets);
 			return true;
 		}
 	}
@@ -210,8 +219,11 @@ bool Sim::Write(std::string str, Client *client) {
 	int del = str.find_last_of(";", std::string::npos);
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str.substr(0, del+1), &offsets)) {
-		Input(str.substr(del + 1), offsets);
-		return true;
+		if (Input(str.substr(del + 1), offsets)) {
+			dprintf("Client %d wrote %d variables",
+				client->id, offsets.size());
+			return true;
+		}
 	}
 	return false;
 }
