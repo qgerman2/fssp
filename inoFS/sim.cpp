@@ -6,7 +6,7 @@
 #include "main.h"
 #include "sim.h"
 #include "server.h"
-#include "dbg.h"
+#include "ui.h"
 
 const char *FSIUPCErrors[] =
 	{	"Okay",
@@ -56,7 +56,7 @@ bool Sim::Open() {
 
 void Sim::Close() {
 	connected = false;
-	dprintf("Disconnected from flight sim\n%s\n", FSIUPCErrors[FSUIPCResult]);
+	dprintf("Disconnected from flight sim %s", FSIUPCErrors[FSUIPCResult]);
 	FSUIPC_Close();
 }
 
@@ -195,5 +195,8 @@ void Sim::Input(std::string str, std::vector<Offset> control) {
 		}
 		i++;
 	}
-	
+}
+
+bool Sim::isConnected() {
+	return connected;
 }

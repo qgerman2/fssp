@@ -12,7 +12,7 @@
 #include "main.h"
 #include "sim.h"
 #include "server.h"
-#include "dbg.h"
+#include "ui.h"
 
 Server::Server(inoFS *inofs) {
 	this->inofs = inofs;
@@ -41,7 +41,6 @@ void Server::UpdateLocalIPs() {
 	GetIpAddrTable(pIPAddrTable, &dwSize, 0);
 	pIPAddrTable = (MIB_IPADDRTABLE *) HeapAlloc(GetProcessHeap(), 0, (dwSize));
 	dwRetVal = GetIpAddrTable( pIPAddrTable, &dwSize, 0 );
-	dprintf("\tNum Entries: %ld\n", pIPAddrTable->dwNumEntries);
 	int i;
 	IN_ADDR IPAddr;
 	for (i=0; i < (int) pIPAddrTable->dwNumEntries; i++) {
@@ -107,7 +106,7 @@ void Server::CheckClients() {
 	auto client = clients.begin();
 	while (client != clients.end()) {
 		if (client->lastPing + TIMEOUT < t) {
-			dprintf("Client timed-out %s\n", inet_ntoa(client->addr.sin_addr));
+			dprintf("Client timed-out %s, id %d", inet_ntoa(client->addr.sin_addr), client->id);
 			client = clients.erase(client);
 		} else {
 			client++;
@@ -137,6 +136,8 @@ void Server::ProcessPackets() {
 	clients_mutex.unlock();
 }
 
+// This functions assumes clients has a mutex lock
+// , otherwhise these pointers are not safe
 bool Server::GetClient(int id, Client **client) {
 	for (auto c = clients.begin(); c != clients.end(); ++c) {
 		if (id == c->id) {

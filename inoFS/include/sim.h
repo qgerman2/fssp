@@ -29,5 +29,6 @@ class Sim {
 		bool Monitor(std::string str, std::vector<Offset> *monitor);
 		bool Control(std::string str, std::vector<Offset> *control);
 		void Input(std::string str, std::vector<Offset> control);
+		bool isConnected();
 };
 #endif
