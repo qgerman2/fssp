@@ -6,14 +6,17 @@
 #include <queue>
 #include <string>
 #include <time.h>
+#include "serialib/serialib.h"
 #include "sim.h"
 
 #define TIMEOUT 10
+#define BAUD_RATE 115200
 #define SERVER_PORT 27015
 #define CLIENT_PORT 27016
 
 struct Client {
 	int id;
+	bool double_precision = false;
 	struct sockaddr_in addr;
 	time_t lastPing;
 	std::vector<Offset> monitor;
@@ -32,12 +35,10 @@ class Server {
 		std::mutex received_mutex;
 
 		SOCKET sock;
-		char recvBuf[1024];
-		int BufLen = 1024;
-
-		char hostname[256];
+		serialib serial;
 
 		void UpdateLocalIPs();
+		void PollSerialDevices();
 		void Thread();
 		int AddClientIfNew(sockaddr_in address);
 		void CheckClients();

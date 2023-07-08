@@ -9,6 +9,7 @@
 #include <WinSock2.h> 
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include "serialib/serialib.h"
 #include "main.h"
 #include "sim.h"
 #include "server.h"
@@ -50,7 +51,20 @@ void Server::UpdateLocalIPs() {
 	HeapFree(GetProcessHeap(), 0, (pIPAddrTable));
 }
 
+void Server::PollSerialDevices() {
+	for (int i = 1; i < 99; i++) {
+		char device_name[64];
+		sprintf(device_name,"\\\\.\\COM%d",i);
+		if (serial.openDevice(device_name, BAUD_RATE) == 1) {
+			dprintf("Device detected on %s\n", device_name);
+			serial.closeDevice();
+		}
+	}
+}
+
 void Server::Thread() {
+	char recvBuf[1024];
+	int BufLen = 1024;
 	sockaddr_in senderAddr;
 	int senderAddrSize = sizeof(senderAddr);
 	while (true) {
@@ -131,7 +145,7 @@ void Server::ProcessPackets() {
 			} else if (packet.compare(0, 2, "W;") == 0) {
 				this->inofs->sim->Write(packet, client);
 			} else {
-				this->inofs->sim->Input(packet, client->control);
+				this->inofs->sim->Input(packet, client->control, client->double_precision);
 			}
 		}
 		received.pop();

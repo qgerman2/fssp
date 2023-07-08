@@ -47,6 +47,11 @@ void Sim::Loop() {
 	}
 }
 
+
+bool Sim::isConnected() {
+	return connected;
+}
+
 bool Sim::Open() {
 	if (connected) {Close();}
 	if (FSUIPC_Open(SIM_ANY, &FSUIPCResult)) {
@@ -63,29 +68,6 @@ void Sim::Close() {
 	FSUIPC_Close();
 }
 
-bool Sim::Poll(std::vector<Offset> *offsets) {
-	if (offsets->size() == 0) {return false;}
-	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
-		char data[8];
-		FSUIPC_Read(offset->location, offset->size, &data, &FSUIPCResult);
-		if (!FSUIPC_Process(&FSUIPCResult)) {
-			Close();
-			return false;
-		}
-		if (offset->type == 0) {offset->value = *(u_char*)&data;}
-		else if (offset->type == 1) {offset->value = *(u_short*)&data;}
-		else if (offset->type == 2) {offset->value = *(u_int*)&data;}
-		else if (offset->type == 3) {offset->value = *(u_long*)&data;}
-		else if (offset->type == 4) {offset->value = *(char*)&data;}
-		else if (offset->type == 5) {offset->value = *(short*)&data;}
-		else if (offset->type == 6) {offset->value = *(int*)&data;}
-		else if (offset->type == 7) {offset->value = *(long*)&data;}
-		else if (offset->type == 8) {offset->value = *(float*)&data;}
-		else if (offset->type == 9) {offset->value = *(double*)&data;}
-	}
-	return true;
-}
-
 void Sim::PrintValues() {
 	auto clients = inofs->server->GetClients();
 	for (auto c = clients.begin(); c != clients.end(); ++c) {
@@ -93,15 +75,6 @@ void Sim::PrintValues() {
 			dprintf("location: %x, type: %d, value: %f\n", offset->location, offset->type, offset->value);
 		}
 	}
-}
-
-void Sim::SendValues(char header, Client *client, std::vector<Offset> *offsets) {
-	std::vector<double> values;
-	values.push_back(header);
-	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
-		values.push_back(offset->value);
-	}
-	this->inofs->server->Broadcast(client->id, (char*)values.data(), values.size() * sizeof(double));
 }
 
 bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
@@ -132,7 +105,7 @@ bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
 				else if (type_str == "f") {offset.type = 8; offset.size = 4;}
 				else if (type_str == "d") {offset.type = 9; offset.size = 8;}
 				if (offset.type > -1) {
-					offset.value = 0;
+					ZeroMemory(&offset.value, 8);
 					dest->push_back(offset);
 				} else {
 					dprintf("ERROR: Unrecognized data type '%s'\n", type_str.c_str());
@@ -166,38 +139,6 @@ bool Sim::Control(std::string str, Client *client) {
 	return false;
 }
 
-bool Sim::Input(std::string str, std::vector<Offset> control) {
-	if (control.size() == 0) {return false;}
-	const int len = control.size() * sizeof(double);
-	if (str.size() != len) {
-		dprintf("Input string not right length (got %d bytes, should be %d bytes)\n",
-			str.size(), len);
-		return false;
-	}
-	int i = 0;
-	for (auto offset = control.begin(); offset != control.end(); offset++) {
-		double value = *(double*)(str.data() + i * sizeof(double));
-		char data[sizeof(double)];
-		if (offset->type == 0) {u_char *ptr = (u_char*)data; *ptr = value;}
-		else if (offset->type == 1) {u_short *ptr = (u_short*)data; *ptr = value;}
-		else if (offset->type == 2) {u_int *ptr = (u_int*)data; *ptr = value;}
-		else if (offset->type == 3) {u_long *ptr = (u_long*)data; *ptr = value;}
-		else if (offset->type == 4) {char *ptr = (char*)data; *ptr = value;}
-		else if (offset->type == 5) {short *ptr = (short*)data; *ptr = value;}
-		else if (offset->type == 6) {int *ptr = (int*)data; *ptr = value;}
-		else if (offset->type == 7) {long *ptr = (long*)data; *ptr = value;}
-		else if (offset->type == 8) {float *ptr = (float*)data; *ptr = value;}
-		else if (offset->type == 9) {double *ptr = (double*)data; *ptr = value;}
-		FSUIPC_Write(offset->location, offset->size, data, &FSUIPCResult);
-		if (!FSUIPC_Process(&FSUIPCResult)) {
-			Close();
-			return false;
-		}
-		i++;
-	}
-	return true;
-}
-
 bool Sim::Read(std::string str, Client *client) {
 	char header = str.at(2);
 	if (header > 48) {
@@ -219,7 +160,7 @@ bool Sim::Write(std::string str, Client *client) {
 	int del = str.find_last_of(";", std::string::npos);
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str.substr(0, del+1), &offsets)) {
-		if (Input(str.substr(del + 1), offsets)) {
+		if (Input(str.substr(del + 1), offsets, client->double_precision)) {
 			dprintf("Client %d wrote %d variables",
 				client->id, offsets.size());
 			return true;
@@ -228,6 +169,103 @@ bool Sim::Write(std::string str, Client *client) {
 	return false;
 }
 
-bool Sim::isConnected() {
-	return connected;
+bool Sim::Poll(std::vector<Offset> *offsets) {
+	if (offsets->size() == 0) {return false;}
+	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
+		char data[8];
+		FSUIPC_Read(offset->location, offset->size, &data, &FSUIPCResult);
+		if (!FSUIPC_Process(&FSUIPCResult)) {
+			Close();
+			return false;
+		}
+		ZeroMemory(&offset->value, 8);
+		strncpy(offset->value, data, 8);
+	}
+	return true;
+}
+
+bool Sim::Input(std::string str, std::vector<Offset> control, bool double_precision) {
+	if (control.size() == 0) {return false;}
+	int value_size = sizeof(double);
+	if (!double_precision) {
+		value_size = sizeof(float);
+	}
+	const int len = control.size() * value_size;
+	if (str.size() != len) {
+		dprintf("Input string not right length (got %d bytes, should be %d bytes)\n",
+			str.size(), len);
+		return false;
+	}
+	int i = 0;
+	for (auto offset = control.begin(); offset != control.end(); offset++) {
+		// Figure out how to make this better
+		if (double_precision) {
+			double value = *(double*)(str.data() + i * value_size);
+			char data[sizeof(double)];
+			if (offset->type == 0) {u_char *ptr = (u_char*)data; *ptr = value;}
+			else if (offset->type == 1) {u_short *ptr = (u_short*)data; *ptr = value;}
+			else if (offset->type == 2) {u_int *ptr = (u_int*)data; *ptr = value;}
+			else if (offset->type == 3) {u_long *ptr = (u_long*)data; *ptr = value;}
+			else if (offset->type == 4) {char *ptr = (char*)data; *ptr = value;}
+			else if (offset->type == 5) {short *ptr = (short*)data; *ptr = value;}
+			else if (offset->type == 6) {int *ptr = (int*)data; *ptr = value;}
+			else if (offset->type == 7) {long *ptr = (long*)data; *ptr = value;}
+			else if (offset->type == 8) {float *ptr = (float*)data; *ptr = value;}
+			else if (offset->type == 9) {double *ptr = (double*)data; *ptr = value;}
+			FSUIPC_Write(offset->location, offset->size, data, &FSUIPCResult);
+			if (!FSUIPC_Process(&FSUIPCResult)) {
+				Close();
+				return false;
+			}
+			i++;
+		} else {
+			float value = *(float*)(str.data() + i * value_size);
+			char data[sizeof(float)];
+			if (offset->type == 0) {u_char *ptr = (u_char*)data; *ptr = value;}
+			else if (offset->type == 1) {u_short *ptr = (u_short*)data; *ptr = value;}
+			else if (offset->type == 2) {u_int *ptr = (u_int*)data; *ptr = value;}
+			else if (offset->type == 3) {u_long *ptr = (u_long*)data; *ptr = value;}
+			else if (offset->type == 4) {char *ptr = (char*)data; *ptr = value;}
+			else if (offset->type == 5) {short *ptr = (short*)data; *ptr = value;}
+			else if (offset->type == 6) {int *ptr = (int*)data; *ptr = value;}
+			else if (offset->type == 7) {long *ptr = (long*)data; *ptr = value;}
+			else if (offset->type == 8) {float *ptr = (float*)data; *ptr = value;}
+			else if (offset->type == 9) {double *ptr = (double*)data; *ptr = value;}
+			FSUIPC_Write(offset->location, offset->size, data, &FSUIPCResult);
+			if (!FSUIPC_Process(&FSUIPCResult)) {
+				Close();
+				return false;
+			}
+			i++;
+		}
+	}
+	return true;
+}
+
+void Sim::SendValues(char header, Client *client, std::vector<Offset> *offsets) {
+	std::vector<double> values;
+	values.push_back(header);
+	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
+		double value = 0;
+		char data[sizeof(double)];
+		strncpy(data, offset->value, sizeof(double));
+		if (offset->type == 0) {value = *(u_char*)&data;}
+		else if (offset->type == 1) {value = *(u_short*)&data;}
+		else if (offset->type == 2) {value = *(u_int*)&data;}
+		else if (offset->type == 3) {value = *(u_long*)&data;}
+		else if (offset->type == 4) {value = *(char*)&data;}
+		else if (offset->type == 5) {value = *(short*)&data;}
+		else if (offset->type == 6) {value = *(int*)&data;}
+		else if (offset->type == 7) {value = *(long*)&data;}
+		else if (offset->type == 8) {value = *(float*)&data;}
+		else if (offset->type == 9) {value = *(double*)&data;}
+		values.push_back(value);
+	}
+	if (client->double_precision) {
+		this->inofs->server->Broadcast(client->id, (char*)values.data(), values.size() * sizeof(double));
+	} else {
+		// Figure out how to shut the compiler up about double -> float data loss
+		std::vector<float> fvalues(values.begin(), values.end());
+		this->inofs->server->Broadcast(client->id, (char*)fvalues.data(), fvalues.size() * sizeof(float));
+	}
 }

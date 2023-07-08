@@ -16,6 +16,7 @@
 				"/Fd${workspaceFolder}\\build\\",
 				"/Fo${workspaceFolder}\\build\\",
 				"${workspaceFolder}\\inoFS\\*.cpp",
+				"${workspaceFolder}\\libraries\\serialib\\serialib.cpp",
 				"${workspaceFolder}\\libraries\\FSUIPC\\FSUIPC_User.lib",
 				"${workspaceFolder}\\libraries\\ftxui\\ftxui-component.lib",
 				"${workspaceFolder}\\libraries\\ftxui\\ftxui-dom.lib",

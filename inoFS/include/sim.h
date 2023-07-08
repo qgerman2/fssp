@@ -8,7 +8,7 @@ struct Offset {
 	u_int location;
 	char type;
 	char size;
-	double value;
+	char value[sizeof(double)];
 };
 struct Client;
 class inoFS;
@@ -28,7 +28,7 @@ class Sim {
 		void Loop();
 		bool Monitor(std::string str, Client *client);
 		bool Control(std::string str, Client *client);
-		bool Input(std::string str, std::vector<Offset> control);
+		bool Input(std::string str, std::vector<Offset> control, bool double_precision);
 		bool Read(std::string str, Client *client);
 		bool Write(std::string str, Client *client);
 		bool isConnected();
