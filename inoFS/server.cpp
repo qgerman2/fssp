@@ -120,7 +120,7 @@ void Server::CheckClients() {
 	auto client = clients.begin();
 	while (client != clients.end()) {
 		if (client->lastPing + TIMEOUT < t) {
-			dprintf("Client %d timed-out", client->id);
+			dprintf("Client %d timed-out\n", client->id);
 			client = clients.erase(client);
 		} else {
 			client++;
@@ -136,13 +136,18 @@ void Server::ProcessPackets() {
 		std::string packet = received.front().first;
 		Client *client;
 		if (GetClient(received.front().second, &client)) {
-			if (packet.compare(0, 2, "M;") == 0) {
+			if (packet.compare(0, 1, "d") == 0) {
+				client->double_precision = true;
+			} else if (packet.compare(0, 1, "f") == 0) {
+				client->double_precision = false;
+			}
+			if (packet.compare(1, 2, "M;") == 0) {
 				this->inofs->sim->Monitor(packet, client);
-			} else if (packet.compare(0, 2, "C;") == 0) {
+			} else if (packet.compare(1, 2, "C;") == 0) {
 				this->inofs->sim->Control(packet, client);
-			} else if (packet.compare(0, 2, "R:") == 0) {
+			} else if (packet.compare(1, 2, "R:") == 0) {
 				this->inofs->sim->Read(packet, client);
-			} else if (packet.compare(0, 2, "W;") == 0) {
+			} else if (packet.compare(1, 2, "W;") == 0) {
 				this->inofs->sim->Write(packet, client);
 			} else {
 				this->inofs->sim->Input(packet, client->control, client->double_precision);

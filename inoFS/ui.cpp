@@ -109,11 +109,16 @@ Element UI::Clients() {
 		std::string address = inet_ntoa(client->addr.sin_addr);
 		std::string port = std::to_string(client->addr.sin_port);
 		std::string id = std::to_string(client->id);
+		std::string precision = "4 bytes (float)";
+		if (client->double_precision) {
+			precision = "8 bytes (double)";
+		}
 		Element el = vbox({
 			text("ID: " + id),
 			text("Address: " + address + ":" + port),
 			text("Control vars: " + std::to_string(client->control.size())),
-			text("Monitor vars: " + std::to_string(client->monitor.size()))
+			text("Monitor vars: " + std::to_string(client->monitor.size())),
+			text("Floating point precision: " + precision)
 		});
 		clientList.push_back(el);
 	}

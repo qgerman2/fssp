@@ -64,7 +64,7 @@ bool Sim::Open() {
 
 void Sim::Close() {
 	connected = false;
-	dprintf("Disconnected from flight sim %s", FSIUPCErrors[FSUIPCResult]);
+	dprintf("Disconnected from flight sim %s\n", FSIUPCErrors[FSUIPCResult]);
 	FSUIPC_Close();
 }
 
@@ -79,7 +79,7 @@ void Sim::PrintValues() {
 
 bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
 	dest->clear();
-	int s = 2;
+	int s = 3;
 	int e;
 	int m;
 	while (true) {
@@ -140,13 +140,13 @@ bool Sim::Control(std::string str, Client *client) {
 }
 
 bool Sim::Read(std::string str, Client *client) {
-	char header = str.at(2);
+	char header = str.at(3);
 	if (header > 48) {
 		header -= 48;
 	}
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str, &offsets)) {
-		dprintf("Client %d requested %d variables with header %d",
+		dprintf("Client %d requested %d variables with header %d\n",
 			client->id, offsets.size(), header);
 		if (Poll(&offsets)) {
 			SendValues(header, client, &offsets);
@@ -161,7 +161,7 @@ bool Sim::Write(std::string str, Client *client) {
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str.substr(0, del+1), &offsets)) {
 		if (Input(str.substr(del + 1), offsets, client->double_precision)) {
-			dprintf("Client %d wrote %d variables",
+			dprintf("Client %d wrote %d variables\n",
 				client->id, offsets.size());
 			return true;
 		}
@@ -199,6 +199,7 @@ bool Sim::Input(std::string str, std::vector<Offset> control, bool double_precis
 	int i = 0;
 	for (auto offset = control.begin(); offset != control.end(); offset++) {
 		// Figure out how to make this better
+		// I'm sorry
 		if (double_precision) {
 			double value = *(double*)(str.data() + i * value_size);
 			char data[sizeof(double)];
