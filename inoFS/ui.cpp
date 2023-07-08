@@ -5,7 +5,6 @@
 #include "main.h"
 #include "server.h"
 #include "ui.h"
-#include "dbg.h"
 
 #include "ftxui/component/component.hpp"
 #include "ftxui/dom/elements.hpp"
@@ -111,8 +110,8 @@ Element UI::Clients() {
 		std::string port = std::to_string(client->addr.sin_port);
 		std::string id = std::to_string(client->id);
 		Element el = vbox({
-			text("Address: " + address + ":" + port),
 			text("ID: " + id),
+			text("Address: " + address + ":" + port),
 			text("Control vars: " + std::to_string(client->control.size())),
 			text("Monitor vars: " + std::to_string(client->monitor.size()))
 		});

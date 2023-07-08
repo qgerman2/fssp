@@ -38,9 +38,11 @@ void Sim::Loop() {
 	}
 	if (connected) {
 		auto clients = inofs->server->GetClients();
-		if (Poll(&clients)) {
-			//PrintValues();
-			SendValues(&clients);
+		for (auto c = clients.begin(); c != clients.end(); ++c) {
+			if (Poll(&c->monitor)) {
+				//PrintValues();
+				SendValues(&(*c), &c->monitor);
+			}
 		}
 	}
 }
@@ -61,27 +63,25 @@ void Sim::Close() {
 	FSUIPC_Close();
 }
 
-bool Sim::Poll(std::vector<Client> *clients) {
-	for (auto c = clients->begin(); c != clients->end(); ++c) {
-		if (c->monitor.size() == 0) {return false;}
-		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
-			char data[8];
-			FSUIPC_Read(offset->location, offset->size, &data, &FSUIPCResult);
-			if (!FSUIPC_Process(&FSUIPCResult)) {
-				Close();
-				return false;
-			}
-			if (offset->type == 0) {offset->value = *(u_char*)&data;}
-			else if (offset->type == 1) {offset->value = *(u_short*)&data;}
-			else if (offset->type == 2) {offset->value = *(u_int*)&data;}
-			else if (offset->type == 3) {offset->value = *(u_long*)&data;}
-			else if (offset->type == 4) {offset->value = *(char*)&data;}
-			else if (offset->type == 5) {offset->value = *(short*)&data;}
-			else if (offset->type == 6) {offset->value = *(int*)&data;}
-			else if (offset->type == 7) {offset->value = *(long*)&data;}
-			else if (offset->type == 8) {offset->value = *(float*)&data;}
-			else if (offset->type == 9) {offset->value = *(double*)&data;}
+bool Sim::Poll(std::vector<Offset> *offsets) {
+	if (offsets->size() == 0) {return false;}
+	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
+		char data[8];
+		FSUIPC_Read(offset->location, offset->size, &data, &FSUIPCResult);
+		if (!FSUIPC_Process(&FSUIPCResult)) {
+			Close();
+			return false;
 		}
+		if (offset->type == 0) {offset->value = *(u_char*)&data;}
+		else if (offset->type == 1) {offset->value = *(u_short*)&data;}
+		else if (offset->type == 2) {offset->value = *(u_int*)&data;}
+		else if (offset->type == 3) {offset->value = *(u_long*)&data;}
+		else if (offset->type == 4) {offset->value = *(char*)&data;}
+		else if (offset->type == 5) {offset->value = *(short*)&data;}
+		else if (offset->type == 6) {offset->value = *(int*)&data;}
+		else if (offset->type == 7) {offset->value = *(long*)&data;}
+		else if (offset->type == 8) {offset->value = *(float*)&data;}
+		else if (offset->type == 9) {offset->value = *(double*)&data;}
 	}
 	return true;
 }
@@ -95,14 +95,12 @@ void Sim::PrintValues() {
 	}
 }
 
-void Sim::SendValues(std::vector<Client> *clients) {
-	for (auto c = clients->begin(); c != clients->end(); ++c) {
-		std::vector<double> values;
-		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
-			values.push_back(offset->value);
-		}
-		this->inofs->server->Broadcast(c->id, (char*)values.data(), values.size() * sizeof(double));
+void Sim::SendValues(Client *client, std::vector<Offset> *offsets) {
+	std::vector<double> values;
+	for (auto offset = offsets->begin(); offset != offsets->end(); offset++) {
+		values.push_back(offset->value);
 	}
+	this->inofs->server->Broadcast(client->id, (char*)values.data(), values.size() * sizeof(double));
 }
 
 bool Sim::ParseOffsets(std::string str, std::vector<Offset> *dest) {
@@ -165,13 +163,13 @@ bool Sim::Control(std::string str, std::vector<Offset> *control) {
 	return false;
 }
 
-void Sim::Input(std::string str, std::vector<Offset> control) {
-	if (control.size() == 0) {return;}
+bool Sim::Input(std::string str, std::vector<Offset> control) {
+	if (control.size() == 0) {return false;}
 	const int len = control.size() * sizeof(double);
 	if (str.size() != len) {
 		dprintf("Input string not right length (got %d bytes, should be %d bytes)\n",
 			str.size(), len);
-		return;
+		return false;
 	}
 	int i = 0;
 	for (auto offset = control.begin(); offset != control.end(); offset++) {
@@ -190,10 +188,32 @@ void Sim::Input(std::string str, std::vector<Offset> control) {
 		FSUIPC_Write(offset->location, offset->size, data, &FSUIPCResult);
 		if (!FSUIPC_Process(&FSUIPCResult)) {
 			Close();
-			return;
+			return false;
 		}
 		i++;
 	}
+	return true;
+}
+
+bool Sim::Read(std::string str, Client *client) {
+	std::vector<Offset> offsets;
+	if (ParseOffsets(str, &offsets)) {
+		if (Poll(&offsets)) {
+			SendValues(client, &offsets);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Sim::Write(std::string str, Client *client) {
+	int del = str.find_last_of(";", std::string::npos);
+	std::vector<Offset> offsets;
+	if (ParseOffsets(str.substr(0, del+1), &offsets)) {
+		Input(str.substr(del + 1), offsets);
+		return true;
+	}
+	return false;
 }
 
 bool Sim::isConnected() {

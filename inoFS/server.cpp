@@ -122,10 +122,14 @@ void Server::ProcessPackets() {
 		std::string packet = received.front().first;
 		Client* client;
 		if (GetClient(received.front().second, &client)) {
-			if (packet.compare("M;") >= 0) {
+			if (packet.compare(0, 2, "M;") == 0) {
 				this->inofs->sim->Monitor(packet, &client->monitor);
-			} else if (packet.compare("C;") >= 0) {
+			} else if (packet.compare(0, 2, "C;") == 0) {
 				this->inofs->sim->Control(packet, &client->control);
+			} else if (packet.compare(0, 2, "R;") == 0) {
+				this->inofs->sim->Read(packet, &(*client));
+			} else if (packet.compare(0, 2, "W;") == 0) {
+				this->inofs->sim->Write(packet, &(*client));
 			} else {
 				this->inofs->sim->Input(packet, client->control);
 			}
