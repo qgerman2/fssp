@@ -101,7 +101,7 @@ void Sim::SendValues(std::vector<Client> *clients) {
 		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
 			values.push_back(offset->value);
 		}
-		this->inofs->server->Broadcast((char*)values.data(), values.size() * sizeof(double));
+		this->inofs->server->Broadcast(c->id, (char*)values.data(), values.size() * sizeof(double));
 	}
 }
 

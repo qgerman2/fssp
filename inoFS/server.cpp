@@ -148,10 +148,13 @@ bool Server::GetClient(int id, Client **client) {
 	return false;
 }
 
-void Server::Broadcast(char *ptr, int bytes) {
+void Server::Broadcast(int id, char *ptr, int bytes) {
 	clients_mutex.lock();
 	for (auto c = clients.begin(); c != clients.end(); ++c) {
-		sendto(sock, ptr, bytes, 0, (SOCKADDR*)&c->addr, sizeof(c->addr));
+		if (id == c->id) {
+			sendto(sock, ptr, bytes, 0, (SOCKADDR*)&c->addr, sizeof(c->addr));
+			break;
+		}
 	}
 	clients_mutex.unlock();
 }

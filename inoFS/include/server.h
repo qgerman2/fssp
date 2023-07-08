@@ -46,7 +46,7 @@ class Server {
 	public:
 		Server(inoFS *inofs);
 		void Loop();
-		void Broadcast(char *ptr, int bytes);
+		void Broadcast(int id, char *ptr, int bytes);
 		std::vector<Client> GetClients();
 		std::vector<std::string> GetLocalIPs();
 };
