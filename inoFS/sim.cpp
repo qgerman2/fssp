@@ -37,9 +37,10 @@ void Sim::Loop() {
 		Open();
 	}
 	if (connected) {
-		if (Poll()) {
+		auto clients = inofs->server->GetClients();
+		if (Poll(&clients)) {
 			//PrintValues();
-			SendValues();
+			SendValues(&clients);
 		}
 	}
 }
@@ -60,9 +61,8 @@ void Sim::Close() {
 	FSUIPC_Close();
 }
 
-bool Sim::Poll() {
-	auto clients = inofs->server->GetClients();
-	for (auto c = clients.begin(); c != clients.end(); ++c) {
+bool Sim::Poll(std::vector<Client> *clients) {
+	for (auto c = clients->begin(); c != clients->end(); ++c) {
 		if (c->monitor.size() == 0) {return false;}
 		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
 			char data[8];
@@ -95,9 +95,8 @@ void Sim::PrintValues() {
 	}
 }
 
-void Sim::SendValues() {
-	auto clients = inofs->server->GetClients();
-	for (auto c = clients.begin(); c != clients.end(); ++c) {
+void Sim::SendValues(std::vector<Client> *clients) {
+	for (auto c = clients->begin(); c != clients->end(); ++c) {
 		std::vector<double> values;
 		for (auto offset = c->monitor.begin(); offset != c->monitor.end(); offset++) {
 			values.push_back(offset->value);

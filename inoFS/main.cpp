@@ -13,6 +13,7 @@ int main() {
 	inofs.ui = new UI(&inofs);
 	while (true) {
 		inofs.server->Loop();
+		
 		inofs.sim->Loop();
 		inofs.ui->Loop();
 		Sleep(1000/30);

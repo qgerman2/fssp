@@ -10,7 +10,7 @@ struct Offset {
 	char size;
 	double value;
 };
-
+struct Client;
 class inoFS;
 class Sim {
 	private:
@@ -19,9 +19,9 @@ class Sim {
 		bool connected;
 		bool Open();
 		void Close();
-		bool Poll();
+		bool Poll(std::vector<Client> *clients);
 		void PrintValues();
-		void SendValues();
+		void SendValues(std::vector<Client> *clients);
 		bool ParseOffsets(std::string str, std::vector<Offset> *dest);
 	public:
 		Sim(inoFS *inofs);
