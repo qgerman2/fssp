@@ -15,7 +15,7 @@ int main() {
 		inofs.server->Loop();
 		inofs.sim->Loop();
 		inofs.ui->Loop();
-		Sleep(1000/30);
+		Sleep(1);
 	}
 	return 1;
 }

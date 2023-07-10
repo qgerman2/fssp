@@ -39,10 +39,7 @@ void Sim::Loop() {
 	if (connected) {
 		auto clients = inofs->server->GetClients();
 		for (auto c = clients.begin(); c != clients.end(); ++c) {
-			if (Poll(&c->monitor)) {
-				//PrintValues();
-				SendValues(0, &(*c), &c->monitor);
-			}
+			Poll(&c->monitor);
 		}
 	}
 }

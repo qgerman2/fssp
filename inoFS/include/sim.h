@@ -21,7 +21,6 @@ class Sim {
 		void Close();
 		bool Poll(std::vector<Offset> *offsets);
 		void PrintValues();
-		void SendValues(char header, Client *client, std::vector<Offset> *offsets);
 		bool ParseOffsets(std::string str, std::vector<Offset> *dest);
 	public:
 		Sim(inoFS *inofs);
@@ -32,5 +31,6 @@ class Sim {
 		bool Read(std::string str, Client *client);
 		bool Write(std::string str, Client *client);
 		bool isConnected();
+		void SendValues(char header, Client *client, std::vector<Offset> *offsets);
 };
 #endif

@@ -23,6 +23,7 @@ struct ClientID {
 
 struct Serial {
 	bool running = false;
+	bool sentMonitor = false;
 	std::thread *thread;
 	std::vector<std::string> tosend;
 	std::mutex *tosend_mutex;

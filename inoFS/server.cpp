@@ -218,6 +218,17 @@ void Server::CheckClients() {
 	time_t t = time(NULL);
 	auto client = clients.begin();
 	while (client != clients.end()) {
+		// Send monitor values
+		// Don't spam the microcontroller
+		if (!client->serial.sentMonitor) {
+			//PrintValues();
+			inofs->sim->SendValues(0, &(*client), &client->monitor);
+			if (client->id.isSerial) {
+				client->serial.sentMonitor = true;
+			}
+		}
+		// Check if theyre alive
+		// Probably should do these in inverse order
 		if (!client->id.isSerial) { 
 			if (client->lastPing + TIMEOUT < t) {
 				dprintf("Client %d timed-out\n", client->id);
@@ -251,6 +262,9 @@ void Server::ProcessPackets() {
 		std::string packet = received.front().first;
 		Client *client;
 		if (GetClient(received.front().second, &client)) {
+			if (client->id.isSerial) {
+				client->serial.sentMonitor = false;
+			}
 			inofs->ui->PrintComms("ID %d recv: %s", client->id.num, packet.c_str());
 			if (packet.compare(0, 1, "d") == 0) {
 				client->double_precision = true;
