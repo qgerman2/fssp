@@ -147,7 +147,7 @@ bool Sim::Read(std::string str, Client *client) {
 	std::vector<Offset> offsets;
 	if (ParseOffsets(str, &offsets)) {
 		dprintf("Client %d requested %d variables with header %d\n",
-			client->id, offsets.size(), header);
+			client->id.num, offsets.size(), header);
 		if (Poll(&offsets)) {
 			SendValues(header, client, &offsets);
 			return true;

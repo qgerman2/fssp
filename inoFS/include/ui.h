@@ -4,6 +4,7 @@
 #include <vector>
 #include "ftxui/component/screen_interactive.hpp"
 #include "ftxui/component/loop.hpp"
+#include "ftxui/component/component.hpp"
 #include "ftxui/dom/elements.hpp"
 
 #define dprintf inofs->ui->Print
@@ -19,8 +20,9 @@ static Element logo = vbox({
 
 // I wish these weren't globals
 // but everything dies if they are not
-static const int console_max = 10;
-static std::vector<std::string> console;
+static const int print_max = 10;
+static std::vector<std::string> logs;
+static std::mutex print_mutex;
 
 class inoFS;
 class UI {
@@ -28,12 +30,15 @@ class UI {
 		inoFS *inofs;
 		ScreenInteractive screen = ScreenInteractive::Fullscreen();
 		Loop *loop;
-		Element State();
+		Component State();
 		Element Clients();
+		Element Comms();
 		Element Log();
+		std::vector<std::string> comms;
 	public:
 		UI(inoFS *inofs);
 		void Loop();
 		void Print(const char *format, ...);
+		void PrintComms(const char *format, ...);
 };
 #endif

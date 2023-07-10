@@ -71,6 +71,7 @@
 		"xstring": "cpp",
 		"xtr1common": "cpp",
 		"xutility": "cpp",
-		"cstdarg": "cpp"
+		"cstdarg": "cpp",
+		"regex": "cpp"
 	}
 }
